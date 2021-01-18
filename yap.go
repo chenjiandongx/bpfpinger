@@ -21,10 +21,17 @@ type Request struct {
 	deadline int
 	resolved string
 
-	Target   string
-	Count    int
-	Interval int // milliseconds
-	Timeout  int // milliseconds
+	// Target is the endpoint where packets will be sent.
+	Target string
+
+	// Count tells pinger to stop after sending (and receiving) Count echo packets.
+	Count int
+
+	// Interval is the wait time between each packet send(in milliseconds).
+	Interval int
+
+	// Timeout specifies a timeout before ping exits.
+	Timeout int
 }
 
 func (r *Request) rid() string {
@@ -55,15 +62,26 @@ func microsecond() float64 {
 
 // Response
 type Response struct {
+	// Target is the endpoint where packets have been sent.
 	Target string
-	Error  error
 
+	// Error the error status after the request completion.
+	Error error
+
+	// PkgLoss is the percentage of packets lost.
 	PkgLoss float64
-	RTTMax  float64
-	RTTMin  float64
+
+	// RTTMax is the maximum round-trip time sent via this pinger.
+	RTTMax float64
+
+	// RTTMin is the minimum round-trip time sent via this pinger.
+	RTTMin float64
+
+	// RTTMean is the average round-trip time sent via this pinger.
 	RTTMean float64
 }
 
+// String returns the formatted response stats string.
 func (r Response) String() string {
 	return fmt.Sprintf("Target: %s, PkgLoss: %v, RTTMin: %.5fms, RTTMean: %.5fms, RTTMax: %.5fms",
 		r.Target,
@@ -92,7 +110,6 @@ type option struct {
 }
 
 const (
-	// DefaultListenAddr
 	DefaultListenAddr   = "0.0.0.0"
 	DefaultPingCount    = 3
 	DefaultPingInterval = 0x01 << 4
@@ -108,7 +125,7 @@ var defaultOpt = option{
 // Option
 type Option func(*option)
 
-// Pinger
+// Pinger represents a packet sender/receiver.
 type Pinger struct {
 	opt *option
 
@@ -128,14 +145,14 @@ type Pinger struct {
 	closing      bool
 }
 
-// WithListenerAddr
+// WithListenerAddr sets the Listening address.
 func WithListenerAddr(addr string) Option {
 	return func(o *option) {
 		o.addr = addr
 	}
 }
 
-// NewPinger
+// NewPinger returns a new Pinger instance and serves the connection.
 func NewPinger(options ...Option) (*Pinger, error) {
 	o := defaultOpt
 	pg := &Pinger{
@@ -172,7 +189,7 @@ func NewPinger(options ...Option) (*Pinger, error) {
 	return pg, nil
 }
 
-// Close
+// Close closes the pinger connection.
 func (pg *Pinger) Close() error {
 	err := pg.conn.Close()
 	pg.pcapHandler.Close()
@@ -181,7 +198,7 @@ func (pg *Pinger) Close() error {
 	return err
 }
 
-// NumPending
+// NumPending returns the number of pending request.
 func (pg *Pinger) NumPending() int {
 	pg.pendingMutex.Lock()
 	n := len(pg.pending)
@@ -189,7 +206,7 @@ func (pg *Pinger) NumPending() int {
 	return n
 }
 
-// CallMulti
+// CallMulti invokes Call with multiple requests.
 func (pg *Pinger) CallMulti(requests ...Request) []Response {
 	wg := sync.WaitGroup{}
 
@@ -217,7 +234,7 @@ func (pg *Pinger) CallMulti(requests ...Request) []Response {
 	return ret
 }
 
-// Call
+// Call invokes the Sendto syscall to send packages, waits for it to complete.
 func (pg *Pinger) Call(request Request) Response {
 	req := &request
 	req.setDefaults()
@@ -254,6 +271,40 @@ func (pg *Pinger) Call(request Request) Response {
 			break
 		}
 
+		// Echo or Echo Reply Message
+		//    0                   1                   2                   3
+		//    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+		//   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		//   |     Type      |     Code      |          Checksum             |
+		//   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		//   |           Identifier          |        Sequence Number        |
+		//   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		//   |     Data ...
+		//   +-+-+-+-+-
+		//
+		//   IP Fields:
+		//
+		//   Type:
+		//      8 for echo message;
+		//      0 for echo reply message.
+		//
+		//   Code:
+		//      0
+		//
+		//   Checksum:
+		//      The checksum is the 16-bit ones's complement of the one's
+		//      complement sum of the ICMP message starting with the ICMP Type.
+		//      For computing the checksum , the checksum field should be zero.
+		//      If the total length is odd, the received data is padded with one
+		//      octet of zeros for computing the checksum.  This checksum may be
+		//      replaced in the future.
+		//
+		//   Identifier:
+		//      If code = 0, an identifier to aid in matching echos and replies,
+		//      may be zero.
+		//
+		//   Sequence Number
+		//
 		msg := icmp.Message{
 			Type: ipv4.ICMPTypeEcho,
 			Code: 0,
@@ -263,6 +314,7 @@ func (pg *Pinger) Call(request Request) Response {
 		pg.echoReqs[genid(req.id, i)] = echoReq{id: req.id, seq: i, t: microsecond()}
 		pg.reqMutex.Unlock()
 
+		// calculates checksum here
 		bs, err := msg.Marshal(nil)
 		if err != nil {
 			continue
