@@ -31,9 +31,7 @@ Go get it.
 $ go get -u github.com/chenjiandongx/yap
 ```
 
-
 ## Usages
-
 
 ### Request
 
@@ -100,14 +98,13 @@ const (
 )
 
 func main() {
-	// Pinger object could be used multiple times
 	pg, err := yap.NewPinger()
 	if err != nil {
 		panic(err)
 	}
 	
-	// but don't forget to close in the end
-    defer pg.Close()
+	// don't forget to close in the end
+	defer pg.Close()
 
 	reqs := make([]yap.Request, 0)
 	for _, host := range []string{"www.google.com", "www.huya.com"} {
@@ -115,6 +112,8 @@ func main() {
 	}
 
 	start := time.Now()
+
+	// pg.Call / pg.CallMulti is thread-safety
 	responses := pg.CallMulti(reqs...)
 	for _, r := range responses {
 		if r.Error != nil {
@@ -139,15 +138,15 @@ PING costs: 3.484154051s
 
 ## Performance
 
-**The gopacket library makes it possible to build an asynchronous ICMP PING communication model.** yap utilizes a PacketConn to send data and then receiving packets with a technology similar to tcpdump. At the same time, BPF allows user-processes to reduce the number of packets processed which will reduce the overhead of switching between kernel-sapce and user-space.
+**The gopacket library makes it possible to build an asynchronous ICMP PING communication model.** yap utilizes a PacketConn to send data and then receives packets with a technology similar to ***tcpdump***. At the same time, BPF allows user-processes to reduce the number of packets processed, which will reduce the overhead of switching between kernel-sapce and user-space.
 
 I have also wrote a general-purpose ping project before, [pinger](https://github.com/chenjiandongx/pinger), but it is based on the synchronous communication model, that is, the next packet will be sent only after the previous packet is received. In this scenario, the process is waitting packets most of time. 
 
-What yap does is deriving two goroutines, one for sending data by PacketConn *(Sender)*, another for recving data by gopacket *(Receiver)* as the work between them is independent of each other. Sender needn't wait for a RTT before it sends next packet.
+What yap does is deriving two goroutines, one for sending data by PacketConn *(Sender)*, another for receiving data by gopacket *(Receiver)* as the work between them is independent of each other. Sender needn't wait for a RTT before it sends next packet.
 
 ### pinger vs yap
 
-**pinger:** ping a host 1000 times with 20 concurrency.
+**pinger:** ping a host 1000 times with 20 goroutines.
 ```golang
 // pingertest/main.go
 package main

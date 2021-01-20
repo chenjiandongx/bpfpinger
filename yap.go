@@ -308,7 +308,7 @@ func (pg *Pinger) Call(request Request) Response {
 		msg := icmp.Message{
 			Type: ipv4.ICMPTypeEcho,
 			Code: 0,
-			Body: &icmp.Echo{ID: req.id, Seq: i, Data: []byte("echo")},
+			Body: &icmp.Echo{ID: req.id, Seq: i, Data: []byte("yap")},
 		}
 		pg.reqMutex.Lock()
 		pg.echoReqs[genid(req.id, i)] = echoReq{id: req.id, seq: i, t: microsecond()}
