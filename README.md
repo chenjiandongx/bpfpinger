@@ -144,9 +144,9 @@ PING costs: 3.484154051s
 
 **The gopacket library makes it possible to build an asynchronous ICMP PING communication model.** yap utilizes a PacketConn to send data and then receives packets with a technology similar to ***tcpdump***. At the same time, BPF allows user-processes to reduce the number of packets processed, which will reduce the overhead of switching between kernel-sapce and user-space.
 
-I have also wrote a general-purpose ping project before, [pinger](https://github.com/chenjiandongx/pinger), but it is based on the synchronous communication model, that is, the next packet will be sent only after the previous packet is received. In this scenario, the process is waitting packets most of time. 
+I have also written a general-purpose ping project before, [pinger](https://github.com/chenjiandongx/pinger), but it is based on the synchronous communication model, that is, the next packet will be sent only after the previous packet is received. In this scenario, the process is waiting for packets most of the time. 
 
-What yap does is deriving two goroutines, one for sending data by PacketConn *(Sender)*, another for receiving data by gopacket *(Receiver)* as the work between them is independent of each other. Sender needn't wait for a RTT before it sends next packet.
+What yap does is deriving two goroutines, one for sending data by PacketConn *(Sender)*, another for receiving data by gopacket *(Receiver)* as the work between them is independent of each other. The sender needn't wait for an RTT before it sends the next packet.
 
 ### pinger vs yap
 
@@ -242,9 +242,9 @@ No, cause to libpcap only for the Linux and MacOS users.
 
 ### Q: Why does yap need privileged mode or root?
 
-All operating systems allow programs to create TCP or UDP sockets without requiring particular permissions. However, ping runs in ICMP (which is neither TCP or UDP). This means we have to create raw IP packets, and sniff the traffic on the network card. Operating systems are designed to require root for such operations.
+All operating systems allow programs to create TCP or UDP sockets without requiring particular permissions. However, ping runs in ICMP (which is neither TCP nor UDP). This means we have to create raw IP packets and sniff the traffic on the network card. Operating systems are designed to require root for such operations.
 
-This is because having unrestricted access to the NIC can expose the user to risks if the application running has bad intentions. This is not the case with pythonping of course, but nonetheless we need this capability to create custom IP packets. Unfortunately, there is simply no other way to create ICMP packets.
+This is because having unrestricted access to the NIC can expose the user to risks if the application running has bad intentions. This is not the case with yap of course, but nonetheless, we need this capability to create custom IP packets. Unfortunately, there is simply no other way to create ICMP packets.
 
 
 ## License
