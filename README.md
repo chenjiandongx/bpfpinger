@@ -41,16 +41,16 @@ type Request struct {
 	// Target is the endpoint where packets will be sent.
 	Target string
 
-    // Count tells pinger to stop after sending (and receiving) Count echo packets.
-    // Default: 3
+	// Count tells pinger to stop after sending (and receiving) Count echo packets.
+	// Default: 3
 	Count int
 
-    // Interval is the wait time between each packet send(in milliseconds).
-    // Default: 15
+	// Interval is the wait time between each packet send(in milliseconds).
+	// Default: 15
 	Interval int
 
-    // Timeout specifies a timeout before the last packet to be sent(in milliseconds).
-    // Dafault: 3000
+	// Timeout specifies a timeout before the last packet to be sent(in milliseconds).
+	// Dafault: 3000
 	Timeout int
 }
 ```
