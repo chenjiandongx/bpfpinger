@@ -30,7 +30,7 @@ type Request struct {
 	// Interval is the wait time between each packet send(in milliseconds).
 	Interval int
 
-	// Timeout specifies a timeout before ping exits.
+	// Timeout specifies a timeout before the last packet to be sent(in milliseconds).
 	Timeout int
 }
 
@@ -112,10 +112,10 @@ type option struct {
 const (
 	DefaultListenAddr   = "0.0.0.0"
 	DefaultPingCount    = 3
-	DefaultPingInterval = 0x01 << 4
+	DefaultPingInterval = 0x0F
 	DefaultTimeout      = 3000
 
-	defaultFilter = "less 42 and icmp"
+	defaultFilter = "less 48 and icmp"
 )
 
 var defaultOpt = option{
@@ -198,7 +198,7 @@ func (pg *Pinger) Close() error {
 	return err
 }
 
-// NumPending returns the number of pending request.
+// NumPending returns the number of pending requests.
 func (pg *Pinger) NumPending() int {
 	pg.pendingMutex.Lock()
 	n := len(pg.pending)
@@ -324,7 +324,7 @@ func (pg *Pinger) Call(request Request) Response {
 			continue
 		}
 
-		time.Sleep(time.Duration(req.Interval) * time.Millisecond)
+		time.Sleep(time.Millisecond * time.Duration(req.Interval))
 	}
 
 	r := <-done
