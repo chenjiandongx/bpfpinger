@@ -1,5 +1,9 @@
 # yap
 
+[![GoDoc](https://godoc.org/github.com/chenjiandongx/yap?status.svg)](https://godoc.org/github.com/chenjiandongx/yap)
+[![Go Report Card](https://goreportcard.com/badge/github.com/chenjiandongx/yap)](https://goreportcard.com/report/github.com/chenjiandongx/yap)
+[![License](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
+
 > **Y**et-**A**nother-**P**inger: A high-performance ICMP ping implementation build on top of BPF technology.
 
 ***yap*** uses the [gopacket]() library to receive and handle ICMP packets manually. ***gopacket*** provides a Go wrapper for ***libpcap*** written in C. gopacket is more than just a simple wrapper though. It provides additional functionality and takes advantage of Go things like interfaces, which makes it incredibly powerful.
