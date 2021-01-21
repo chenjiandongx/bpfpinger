@@ -142,7 +142,7 @@ PING costs: 3.484154051s
 
 ## Performance
 
-**The gopacket library makes it possible to build an asynchronous ICMP PING communication model.** yap utilizes a PacketConn to send data and then receives packets with a technology similar to ***tcpdump***. At the same time, BPF allows user-processes to reduce the number of packets processed, which will reduce the overhead of switching between kernel-sapce and user-space.
+**The gopacket library makes it possible to build an asynchronous ICMP PING communication model.** yap utilizes a PacketConn to send data and then receives packets with a technology similar to ***tcpdump***. At the same time, BPF allows user-processes to reduce the number of packets processed, which will reduce the overhead of switching between kernel-space and user-space.
 
 I have also written a general-purpose ping project before, [pinger](https://github.com/chenjiandongx/pinger), but it is based on the synchronous communication model, that is, the next packet will be sent only after the previous packet is received. In this scenario, the process is waiting for packets most of the time. 
 
