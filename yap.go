@@ -115,7 +115,19 @@ const (
 	DefaultPingInterval = 0x0F
 	DefaultTimeout      = 3000
 
-	defaultFilter = "less 48 and icmp"
+	// Summary of Message Types
+	//  0  Echo Reply   <- notice
+	//  3  Destination Unreachable
+	//  4  Source Quench
+	//  5  Redirect
+	//  8  Echo
+	// 11  Time Exceeded
+	// 12  Parameter Problem
+	// 13  Timestamp
+	// 14  Timestamp Reply
+	// 15  Information Request
+	// 16  Information Reply
+	defaultFilter = "less 48 and icmp[icmptype] == icmp-echoreply"
 )
 
 var defaultOpt = option{
@@ -419,22 +431,6 @@ func (pg *Pinger) serveConn() {
 		}
 
 		icmpPkg := icmpLayer.(*layers.ICMPv4)
-
-		// Summary of Message Types
-		//  0  Echo Reply
-		//  3  Destination Unreachable
-		//  4  Source Quench
-		//  5  Redirect
-		//  8  Echo
-		// 11  Time Exceeded
-		// 12  Parameter Problem
-		// 13  Timestamp
-		// 14  Timestamp Reply
-		// 15  Information Request
-		// 16  Information Reply
-		if uint16(icmpPkg.TypeCode) != uint16(ipv4.ICMPTypeEchoReply) {
-			continue
-		}
 
 		ipv4Layer := packet.Layer(layers.LayerTypeIPv4)
 		if ipv4Layer == nil {
