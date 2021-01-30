@@ -19,13 +19,13 @@
 Before we get started, you need to install libpcap first.
 
 ```shell
-# Centos
-$ sudo yum install libpcap-devel
+# yum
+$ sudo yum install libpcap libpcap-devel
 
-# Ubuntu
-$ sudo apt-get install libpcap-dev
+# apt-get
+$ sudo apt-get install libpcap libpcap-dev
 
-# MacOS
+# OSX
 $ brew install libpcap
 ```
 
