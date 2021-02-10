@@ -6,7 +6,7 @@
 
 > **Y**et-**A**nother-**P**inger: A high-performance ICMP ping implementation build on top of BPF technology.
 
-***yap*** uses the [gopacket]() library to receive and handle ICMP packets manually. ***gopacket*** provides a Go wrapper for ***libpcap*** written in C. gopacket is more than just a simple wrapper though. It provides additional functionality and takes advantage of Go things like interfaces, which makes it incredibly powerful.
+***yap*** uses the [gopacket](https://github.com/google/gopacket) library to receive and handle ICMP packets manually. ***gopacket*** provides a Go wrapper for ***libpcap*** written in C. gopacket is more than just a simple wrapper though. It provides additional functionality and takes advantage of Go things like interfaces, which makes it incredibly powerful.
 
 ***Libpcap*** is a portable open-source C/C++ library designed for Linux and Mac OS users which enables administrators to capture and filter packets. Packet sniffing tools like ***tcpdump*** use the libpcap format.
 
@@ -16,14 +16,14 @@
 
 ## Installation
 
-Before we get started, you need to install libpcap first.
+Before we get started, you need to get libpcap installed first.
 
 ```shell
 # yum
 $ sudo yum install libpcap libpcap-devel
 
 # apt-get
-$ sudo apt-get install libpcap libpcap-dev
+$ sudo apt-get install libpcap-dev
 
 # OSX
 $ brew install libpcap
