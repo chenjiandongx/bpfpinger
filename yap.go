@@ -1,4 +1,4 @@
-package yap
+package ebppinger
 
 import (
 	"fmt"

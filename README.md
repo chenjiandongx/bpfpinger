@@ -1,14 +1,14 @@
-# yap
+# bpfpinger
 
 [![GoDoc](https://godoc.org/github.com/chenjiandongx/yap?status.svg)](https://godoc.org/github.com/chenjiandongx/yap)
 [![Go Report Card](https://goreportcard.com/badge/github.com/chenjiandongx/yap)](https://goreportcard.com/report/github.com/chenjiandongx/yap)
 [![License](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
 
-> **Y**et-**A**nother-**P**inger: A high-performance ICMP ping implementation build on top of BPF technology.
+> **A high-performance ICMP ping implementation build on top of BPF technology.
 
 [中文介绍](./README-CN.md)
 
-***yap*** uses the [gopacket](https://github.com/google/gopacket) library to receive and handle ICMP packets manually. ***gopacket*** provides a Go wrapper for ***libpcap*** written in C. gopacket is more than just a simple wrapper though. It provides additional functionality and takes advantage of Go things like interfaces, which makes it incredibly powerful.
+***bpfpinger*** uses the [gopacket](https://github.com/google/gopacket) library to receive and handle ICMP packets manually. ***gopacket*** provides a Go wrapper for ***libpcap*** written in C. gopacket is more than just a simple wrapper though. It provides additional functionality and takes advantage of Go things like interfaces, which makes it incredibly powerful.
 
 ***Libpcap*** is a portable open-source C/C++ library designed for Linux and Mac OS users which enables administrators to capture and filter packets. Packet sniffing tools like ***tcpdump*** use the libpcap format.
 
