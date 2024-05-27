@@ -1,10 +1,10 @@
 # bpfpinger
 
-[![GoDoc](https://godoc.org/github.com/chenjiandongx/yap?status.svg)](https://godoc.org/github.com/chenjiandongx/yap)
-[![Go Report Card](https://goreportcard.com/badge/github.com/chenjiandongx/yap)](https://goreportcard.com/report/github.com/chenjiandongx/yap)
+[![GoDoc](https://godoc.org/github.com/chenjiandongx/bpfpinger?status.svg)](https://godoc.org/github.com/chenjiandongx/bpfpinger)
+[![Go Report Card](https://goreportcard.com/badge/github.com/chenjiandongx/bpfpinger)](https://goreportcard.com/report/github.com/chenjiandongx/bpfpinger)
 [![License](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
 
-> **A high-performance ICMP ping implementation build on top of BPF technology.
+> A high-performance ICMP ping implementation build on top of BPF technology.
 
 [中文介绍](./README-CN.md)
 
@@ -34,7 +34,7 @@ $ brew install libpcap
 Go get it.
 
 ```shell
-$ go get -u github.com/chenjiandongx/yap
+$ go get -u github.com/chenjiandongx/bpfpinger
 ```
 
 ## Usages
@@ -96,7 +96,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/chenjiandongx/yap"
+	"github.com/chenjiandongx/bpfpinger"
 )
 
 const (
@@ -104,7 +104,7 @@ const (
 )
 
 func main() {
-	pg, err := yap.NewPinger()
+	pg, err := bpfpinger.NewPinger()
 	if err != nil {
 		panic(err)
 	}
@@ -112,9 +112,9 @@ func main() {
 	// don't forget to close in the end
 	defer pg.Close()
 
-	reqs := make([]yap.Request, 0)
+	reqs := make([]bpfpinger.Request, 0)
 	for _, host := range []string{"www.google.com", "www.huya.com"} {
-		reqs = append(reqs, yap.Request{Target: host, Count: pingCount})
+		reqs = append(reqs, bpfpinger.Request{Target: host, Count: pingCount})
 	}
 
 	start := time.Now()
@@ -144,13 +144,13 @@ PING costs: 3.484154051s
 
 ## Performance
 
-**The gopacket library makes it possible to build an asynchronous ICMP PING communication model.** yap utilizes a PacketConn to send data and then receives packets with a technology similar to ***tcpdump***. At the same time, BPF allows user-processes to reduce the number of packets processed, which will reduce the overhead of switching between kernel-space and user-space.
+**The gopacket library makes it possible to build an asynchronous ICMP PING communication model.** bpfpinger utilizes a PacketConn to send data and then receives packets with a technology similar to ***tcpdump***. At the same time, BPF allows user-processes to reduce the number of packets processed, which will reduce the overhead of switching between kernel-space and user-space.
 
 I have also written a general-purpose ping project before, [pinger](https://github.com/chenjiandongx/pinger), but it is based on the synchronous communication model, that is, the next packet will be sent only after the previous packet is received. In this scenario, the process is waiting for packets most of the time. 
 
-What yap does is deriving two goroutines, one for sending data by PacketConn *(Sender)*, another for receiving data by gopacket *(Receiver)* as the work between them is independent of each other. The sender needn't wait for an RTT before it sends the next packet.
+What bpfpinger does is deriving two goroutines, one for sending data by PacketConn *(Sender)*, another for receiving data by gopacket *(Receiver)* as the work between them is independent of each other. The sender needn't wait for an RTT before it sends the next packet.
 
-### pinger vs yap
+### pinger vs bpfpinger
 
 **pinger:** ping a host 1000 times with 20 goroutines.
 ```golang
@@ -196,16 +196,16 @@ func main() {
 // PING Costs: 29.998770237s
 ```
 
-**yap**: ping a host 1000 times only used 2 goroutines.
+**bpfpinger**: ping a host 1000 times only used 2 goroutines.
 ```golang
-// yaptest/main.go
+// bpfpingertest/main.go
 package main
 
 import (
 	"fmt"
 	"time"
 
-	"github.com/chenjiandongx/yap"
+	"github.com/chenjiandongx/bpfpinger"
 )
 
 const (
@@ -215,14 +215,14 @@ const (
 )
 
 func main() {
-	pg, err := yap.NewPinger()
+	pg, err := bpfpinger.NewPinger()
 	if err != nil {
 		panic(err)
 	}
 	defer pg.Close()
 
 	start := time.Now()
-	response := pg.Call(yap.Request{Target: "www.huya.com", Count: PingCount, Timeout: PingTimeout, Interval: PingInterval})
+	response := pg.Call(bpfpinger.Request{Target: "www.huya.com", Count: PingCount, Timeout: PingTimeout, Interval: PingInterval})
 	if response.Error != nil {
 		panic(response.Error)
 	}
@@ -238,15 +238,15 @@ func main() {
 
 ## FAQ
 
-### Q: Does yap support Windows System?
+### Q: Does bpfpinger support Windows System?
 
 No, cause to libpcap only for the Linux and MacOS users.
 
-### Q: Why does yap need privileged mode or root?
+### Q: Why does bpfpinger need privileged mode or root?
 
 All operating systems allow programs to create TCP or UDP sockets without requiring particular permissions. However, ping runs in ICMP (which is neither TCP nor UDP). This means we have to create raw IP packets and sniff the traffic on the network card. Operating systems are designed to require root for such operations.
 
-This is because having unrestricted access to the NIC can expose the user to risks if the application running has bad intentions. This is not the case with yap of course, but nonetheless, we need this capability to create custom IP packets. Unfortunately, there is simply no other way to create ICMP packets.
+This is because having unrestricted access to the NIC can expose the user to risks if the application running has bad intentions. This is not the case with bpfpinger of course, but nonetheless, we need this capability to create custom IP packets. Unfortunately, there is simply no other way to create ICMP packets.
 
 
 ## License

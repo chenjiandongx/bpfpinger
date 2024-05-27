@@ -1,15 +1,14 @@
 # bpfpinger
 
-[![GoDoc](https://godoc.org/github.com/chenjiandongx/yap?status.svg)](https://godoc.org/github.com/chenjiandongx/yap)
-[![Go Report Card](https://goreportcard.com/badge/github.com/chenjiandongx/yap)](https://goreportcard.com/report/github.com/chenjiandongx/yap)
+[![GoDoc](https://godoc.org/github.com/chenjiandongx/bpfpinger?status.svg)](https://godoc.org/github.com/chenjiandongx/bpfpinger)
+[![Go Report Card](https://goreportcard.com/badge/github.com/chenjiandongx/bpfpinger)](https://goreportcard.com/report/github.com/chenjiandongx/bpfpinger)
 [![License](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
 
 > BPF 技术最初诞生就是为了高效地处理网络包。
 
 BPF 利用其虚拟机技术，可以在一个比较靠前的位置处理网络包（cBPF 其实是在内核中过滤处理，相对 XDP 这种 eBPF 技术算靠后的了），减少从内核态到用户态的网络包的数量，**本质上也就是减少数据从内核态复制到用户态的开销以及两者上下文切换的开销**。
 
-[yap](https://github.com/chenjiandongx/yap) 是一个 Golang 高性能的 ICMP PING 工具，其整体的实现思路是利用 `syscall.Sendto` 系统调用将自己封装好的 ICMP 包发送至网卡，然后再利用 [gopacket](https://github.com/google/gopacket) 库监听网卡并自己接收和处理 ICMP 包，这种设计模式使得 ICMP 的通信模式就变成了异步非阻塞的。
-
+[bpfpinger](https://github.com/chenjiandongx/bpfpinger) 是一个 Golang 高性能的 ICMP PING 工具，其整体的实现思路是利用 `syscall.Sendto` 系统调用将自己封装好的 ICMP 包发送至网卡，然后再利用 [gopacket](https://github.com/google/gopacket) 库监听网卡并自己接收和处理 ICMP 包，这种设计模式使得 ICMP 的通信模式就变成了异步非阻塞的。
 
 原生 ICMP 的同步通讯模型，在单个 goroutine 内，每一个 request 包需要等待上一个 reply 包到来才会继续发送，这也就导致了程序的大多数时间都需要等待一次 RTT（Round Trip Time）的时间。
 <p align="center">
@@ -17,7 +16,7 @@ BPF 利用其虚拟机技术，可以在一个比较靠前的位置处理网络�
 </br><i>图 1：同步阻塞模型</i>
 </p>
 
-yap 使用的异步通信模型，所有一个 ICMP 包只由全局唯一一个 goroutine 负责发送，然后使用 gopacket 监听网卡，将数据包进行处理和计算耗时，这样管理发送的 Sender 就可以持续不断的工作，无需同步地等待回包，大大提高了效率。
+bpfpinger 使用的异步通信模型，所有一个 ICMP 包只由全局唯一一个 goroutine 负责发送，然后使用 gopacket 监听网卡，将数据包进行处理和计算耗时，这样管理发送的 Sender 就可以持续不断的工作，无需同步地等待回包，大大提高了效率。
 <p align="center">
 <img src="https://user-images.githubusercontent.com/19553554/107473130-22103800-6bab-11eb-9a0e-31494bf5fcb0.png" width="50%">
 </br><i>图 2：异步非阻塞模型</i>
@@ -25,7 +24,7 @@ yap 使用的异步通信模型，所有一个 ICMP 包只由全局唯一一个 
 
 ### 优化细节
 
-1）**更小的数据包**：icmp 包的 body 尽量的小。yap 使用的 ICMP 包整体大小约为 46 bytes，为什么是大约呢？因为在开发的过程中，我发现在 MacOS 上和在 CentOS 上使用同样的代码，最后计算的包的大小是不一样的，差了个 2 个 bytes。🤔 目前还不知道是操作系统本身实现不同导致的差异，还是因为我是开的虚拟机做开发，网卡虚拟化本身会导致的差异。
+1）**更小的数据包**：icmp 包的 body 尽量的小。bpfpinger 使用的 ICMP 包整体大小约为 46 bytes，为什么是大约呢？因为在开发的过程中，我发现在 MacOS 上和在 CentOS 上使用同样的代码，最后计算的包的大小是不一样的，差了个 2 个 bytes。🤔 目前还不知道是操作系统本身实现不同导致的差异，还是因为我是开的虚拟机做开发，网卡虚拟化本身会导致的差异。
 
 ```golang
 msg := icmp.Message{
@@ -97,7 +96,7 @@ defaultFilter = "less 48 and icmp[icmptype] == icmp-echoreply"
 // 16  Information Reply
 ```
 
-3）**更唯一的请求标识**：为了避免不同进程同时使用 yap 进行 ping 操作而导致的数据误差，yap 使用了随机初始化 Identifier + dstip 作为独立标识。最大程度上的降低数据误差的可能性。
+3）**更唯一的请求标识**：为了避免不同进程同时使用 bpfpinger 进行 ping 操作而导致的数据误差，bpfpinger 使用了随机初始化 Identifier + dstip 作为独立标识。最大程度上的降低数据误差的可能性。
 
 ```golang
 // 随机初始化 counter
@@ -125,7 +124,7 @@ pg.rspMutex.Unlock()
 
 > 对比实验操作系统：CentOS7
 
-在写 yap 之前，我也曾经写过另外一个 ICMP ping 库，[pinger](https://github.com/chenjiandongx/pinger)，这个刚好就是上面所描述的同步模型的设计方案。所以就用这个库来跟 yap 做性能对比。
+在写 bpfpinger 之前，我也曾经写过另外一个 ICMP ping 库，[pinger](https://github.com/chenjiandongx/pinger)，这个刚好就是上面所描述的同步模型的设计方案。所以就用这个库来跟 bpfpinger 做性能对比。
 
 `/root/golang/src/pingtest/pinger/main.go`
 ```golang
@@ -193,7 +192,7 @@ func main() {
 }
 ```
 
-`/root/golang/src/pingtest/yap/main.go`
+`/root/golang/src/pingtest/bpfpinger/main.go`
 ```golang
 package main
 
@@ -204,7 +203,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/chenjiandongx/yap"
+	"github.com/chenjiandongx/bpfpinger"
 	"github.com/shirou/gopsutil/process"
 )
 
@@ -234,19 +233,19 @@ func main() {
 				panic(err)
 			}
 
-			fmt.Println("yap cpu.busy: ", busy)
+			fmt.Println("bpfpinger cpu.busy: ", busy)
 		}
 	}()
 
 
-	pg, err := yap.NewPinger()
+	pg, err := bpfpinger.NewPinger()
 	if err != nil {
 		panic(err)
 	}
 	defer pg.Close()
 
 	start := time.Now()
-	response := pg.Call(yap.Request{Target: "www.huya.com", Count: PingCount, Timeout: PingTimeout, Interval: PingInterval})
+	response := pg.Call(bpfpinger.Request{Target: "www.huya.com", Count: PingCount, Timeout: PingTimeout, Interval: PingInterval})
 	if response.Error != nil {
 		panic(response.Error)
 	}
@@ -273,7 +272,7 @@ echo -n ">>>>>> start: ";date;time for i in {0..2000};do ping 127.0.0.1 -c 10000
 
 ![image](https://user-images.githubusercontent.com/19553554/107477054-0fe5c800-6bb2-11eb-95ab-7571b47f6cb3.png)
 
-**喔嚯，yap 进程依旧稳如老狗，而 pinger 进程的 CPU 使用率已经飙升到了 50% 以上....**
+**喔嚯，bpfpinger 进程依旧稳如老狗，而 pinger 进程的 CPU 使用率已经飙升到了 50% 以上....**
 
 刚才讲到，为了调试我对两者均开启了 pprof 服务，那就来看看这段时间两个进程到底在干什么会产生如此大的性能差异。
 
@@ -332,7 +331,7 @@ Showing nodes accounting for 15.99s, 100% of 15.99s total
 
 这下就非常明显了吧，大多数的开销都在 `revcFrom` 系统调用上，因为我们刚才压测的时候往本地的网卡灌入了海量的 ICMP 包，**所以进程需要不断地陷入到内核态去将所有的这些 ICMP 包复制到用户态来进行验证处理。**
 
-#### yap pprof
+#### bpfpinger pprof
 
 虽然 syscall 的开销也是占大头，但是进程总体的 CPU 开销是极小的（相比于上面的 pinger）。
 
@@ -346,7 +345,7 @@ Showing top 20 nodes out of 28
       30ms 14.29% 90.48%       30ms 14.29%  syscall.Syscall6
       10ms  4.76% 95.24%       10ms  4.76%  runtime.lock
       10ms  4.76%   100%      140ms 66.67%  runtime.sysmon
-         0     0%   100%       30ms 14.29%  github.com/chenjiandongx/yap.(*Pinger).Call
+         0     0%   100%       30ms 14.29%  github.com/chenjiandongx/bpfpinger.(*Pinger).Call
          0     0%   100%       40ms 19.05%  github.com/google/gopacket.(*PacketSource).NextPacket
          0     0%   100%       40ms 19.05%  github.com/google/gopacket.(*PacketSource).packetsToChannel
          0     0%   100%       40ms 19.05%  github.com/google/gopacket/pcap.(*Handle).ReadPacketData
@@ -380,6 +379,6 @@ Showing nodes accounting for 210ms, 100% of 210ms total
 ```
 
 #### 小结
-1）yap 相比于 pinger 有着更优的执行效率，且性能受网络环境的影响极小，即使的同时收发海量的数据包，yap 的开销基本上是维持在一个常数。这本质上还是得益于 BPF 在内核态就将大量的数据包给过滤掉了，减小用户进程处理包的压力。
+1）bpfpinger 相比于 pinger 有着更优的执行效率，且性能受网络环境的影响极小，即使的同时收发海量的数据包，bpfpinger 的开销基本上是维持在一个常数。这本质上还是得益于 BPF 在内核态就将大量的数据包给过滤掉了，减小用户进程处理包的压力。
 
-2）yap 的整体执行时间是可控的，它的异步模型并不需要同步等待回包，这也就意味着它的发包完全不受网络抖动的影响，而 pinger 如果再网络质量比较差的时候，即使多开 goroutine 也避免不了需要长时间等待 RTT 的尴尬局面。
+2）bpfpinger 的整体执行时间是可控的，它的异步模型并不需要同步等待回包，这也就意味着它的发包完全不受网络抖动的影响，而 pinger 如果再网络质量比较差的时候，即使多开 goroutine 也避免不了需要长时间等待 RTT 的尴尬局面。
