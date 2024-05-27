@@ -164,8 +164,8 @@ func WithListenerAddr(addr string) Option {
 	}
 }
 
-// NewPinger returns a new Pinger instance and serves the connection.
-func NewPinger(options ...Option) (*Pinger, error) {
+// New returns a new Pinger instance and serves the connection.
+func New(options ...Option) (*Pinger, error) {
 	o := defaultOpt
 	pg := &Pinger{
 		opt:      &o,

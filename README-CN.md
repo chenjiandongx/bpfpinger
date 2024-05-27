@@ -172,7 +172,7 @@ func main() {
 		}
 	}()
 
-	opt := *pinger.DefaultICMPPingOpts
+	opt := pinger.DefaultICMPPingOpts()
 	opt.Interval = func() time.Duration { return time.Duration(PingInterval) * time.Millisecond }
 	opt.PingTimeout = time.Duration(PingTimeout) * time.Millisecond
 	opt.PingCount = PingCount
@@ -238,7 +238,7 @@ func main() {
 	}()
 
 
-	pg, err := bpfpinger.NewPinger()
+	pg, err := bpfpinger.New()
 	if err != nil {
 		panic(err)
 	}
